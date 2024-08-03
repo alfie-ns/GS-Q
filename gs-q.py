@@ -1,3 +1,24 @@
+# Formatting Functions ----------------------------------------------------------
+def supports_formatting():
+    return sys.stdout.isatty()
+
+def format_text(text, format_code):
+    if supports_formatting():
+        return f"\033[{format_code}m{text}\033[0m"
+    return text
+
+def bold(text):
+    return format_text(text, "1")
+
+def blue(text):
+    return format_text(text, "34")
+
+def red(text):
+    return format_text(text, "31")
+
+def green(text):
+    return format_text(text, "32")
+
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
@@ -8,7 +29,7 @@ from dotenv import load_dotenv
 import openai
 import gs_quant.timeseries as ts
 from gs_quant.timeseries import Window
-from gs_quant.markets.securities import Stock
+from gs_quant.markets.securities import Stock, SecurityMaster
 from gs_quant.markets.portfolio import Portfolio
 import pandas as pd
 import numpy as np
@@ -20,7 +41,8 @@ load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 openai_client = openai.OpenAI(api_key=openai_api_key)
 
-# Formatting functions (supports_formatting, format_text, bold, blue, red, green) remain unchanged
+# Formatting Functions ----------------------------------------------------------
+# (Formatting functions remain unchanged)
 
 # Investment Analysis Functions -------------------------------------------------
 def generate_sample_data(n_observations=1000):
@@ -39,7 +61,7 @@ def analyse_timeseries(series):
     }
 
 def get_stock_data(ticker, start_date, end_date):
-    stock = Stock(ticker)
+    stock = Stock(ticker, SecurityMaster.get(ticker))
     return stock.price.loc[start_date:end_date]
 
 def calculate_returns(prices):
@@ -49,8 +71,9 @@ def sharpe_ratio(returns, risk_free_rate=0.02):
     return (returns.mean() - risk_free_rate) / returns.std()
 
 def recommend_investments(tickers, start_date, end_date):
-    portfolio = Portfolio(tickers)
-    performance = portfolio.performance(start=start_date, end=end_date)
+    stocks = [Stock(ticker, SecurityMaster.get(ticker)) for ticker in tickers]
+    portfolio = Portfolio(stocks)
+    performance = portfolio.price.loc[start_date:end_date]
     returns = calculate_returns(performance)
     
     recommendations = []
@@ -80,7 +103,7 @@ def ai_response(user_input, investment_data, analysis):
     Respond in a helpful and professional manner, providing investment insights and recommendations when possible. If the user's request requires any of the above actions, indicate that you'll perform them and explain the results."""
 
     response = openai_client.chat.completions.create(
-        model="gpt-40-mini",
+        model="gpt-4o-mini",
         messages=[{"role": "system", "content": prompt}]
     )
 
@@ -104,17 +127,23 @@ def ai_response(user_input, investment_data, analysis):
         tickers = ['AAPL', 'GOOGL', 'MSFT']
         start_date = '2023-01-01'
         end_date = '2023-12-31'
-        stock_data = {ticker: get_stock_data(ticker, start_date, end_date) for ticker in tickers}
-        ai_message += f"\n\nI've retrieved real stock data for {', '.join(tickers)} from {start_date} to {end_date}."
+        try:
+            stock_data = {ticker: get_stock_data(ticker, start_date, end_date) for ticker in tickers}
+            ai_message += f"\n\nI've retrieved real stock data for {', '.join(tickers)} from {start_date} to {end_date}."
+        except Exception as e:
+            ai_message += f"\n\nI encountered an error while trying to retrieve stock data: {str(e)}"
     
     if "recommend investments" in ai_message.lower():
         tickers = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'FB']
         start_date = '2023-01-01'
         end_date = '2023-12-31'
-        recommendations = recommend_investments(tickers, start_date, end_date)
-        ai_message += f"\n\nBased on the Sharpe ratio, here are my investment recommendations:\n"
-        for ticker, sharpe in recommendations[:3]:
-            ai_message += f"{ticker}: Sharpe Ratio = {sharpe:.2f}\n"
+        try:
+            recommendations = recommend_investments(tickers, start_date, end_date)
+            ai_message += f"\n\nBased on the Sharpe ratio, here are my investment recommendations:\n"
+            for ticker, sharpe in recommendations[:3]:
+                ai_message += f"{ticker}: Sharpe Ratio = {sharpe:.2f}\n"
+        except Exception as e:
+            ai_message += f"\n\nI encountered an error while trying to generate investment recommendations: {str(e)}"
 
     return ai_message
 
