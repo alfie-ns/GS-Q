@@ -1,25 +1,3 @@
-# Formatting Functions ----------------------------------------------------------
-def supports_formatting():
-    return sys.stdout.isatty()
-
-def format_text(text, format_code):
-    if supports_formatting():
-        return f"\033[{format_code}m{text}\033[0m"
-    return text
-
-def bold(text):
-    return format_text(text, "1")
-
-def blue(text):
-    return format_text(text, "34")
-
-def red(text):
-    return format_text(text, "31")
-
-def green(text):
-    return format_text(text, "32")
-
-
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -42,7 +20,25 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 openai_client = openai.OpenAI(api_key=openai_api_key)
 
 # Formatting Functions ----------------------------------------------------------
-# (Formatting functions remain unchanged)
+def supports_formatting():
+    return sys.stdout.isatty()
+
+def format_text(text, format_code):
+    if supports_formatting():
+        return f"\033[{format_code}m{text}\033[0m"
+    return text
+
+def bold(text):
+    return format_text(text, "1")
+
+def blue(text):
+    return format_text(text, "34")
+
+def red(text):
+    return format_text(text, "31")
+
+def green(text):
+    return format_text(text, "32")
 
 # Investment Analysis Functions -------------------------------------------------
 def generate_sample_data(n_observations=1000):
