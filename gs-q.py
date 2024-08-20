@@ -148,13 +148,12 @@ def main():
     investment_data = None
     analysis = None
 
-    while True:
-        os.system('clear')
-        print(bold(blue("\nAI Investment Analysis Assistant\n")))
+    print(bold(blue("\nAI Investment Analysis Assistant\n")))
 
+    while True:
         user_input = input(bold("You: ")).strip()
 
-        if user_input.lower() == 'exit':
+        if user_input.lower() == 'exit': # if 'exit' is entered, exit program
             os.system('clear')
             print("\nExiting...")
             time.sleep(1.5)
@@ -164,7 +163,6 @@ def main():
         response = ai_response(user_input, investment_data, analysis)
         print(bold(red("\nAI: ")) + response)
 
-        input("\nPress Enter to continue...")
 
 if __name__ == "__main__":
     main()
